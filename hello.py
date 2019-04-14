@@ -42,6 +42,36 @@ class Compute(object):
         cursor = db.cursor()
         sql = "select ID from es_institution where SCHOOL_NAME = %s and NAME = %s "
         cursor.execute(sql, (schoolName,institutionName))
+        institution_id = cursor.fetchall()
+        return institution_id
+
+    @rpc
+    def get_schoolId(self,schoolName):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select SCHOOL_ID from es_institution where SCHOOL_NAME = %s"
+        cursor.execute(sql, (schoolName))
+        school_id = cursor.fetchone()
+        return school_id
+
+    @rpc
+    def get_teacher_name_and_insId(self,school_id):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME,INSTITUTION_ID from es_teacher where SCHOOL_ID = %s and ACADEMICIAN > 1"
+        cursor.execute(sql, (school_id))
+        teacher = cursor.fetchall()
+        return teacher
+
+    @rpc
+    def get_institution_name(self,institution_ID):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME from es_institution where ID = %s "
+        cursor.execute(sql, (institution_ID))
         institution_id = cursor.fetchone()
         return institution_id
 

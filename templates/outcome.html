@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-<table class="table table-hover" style="width: 150px; height: 30px; ">
+<table class="table table-hover" style="width: 350px; height: 30px; ">
+    {% if teacher_name %}
     <tr>
         <td style="font-weight: bold">院士名单</td>
     </tr>
@@ -17,6 +18,22 @@
             </tr>
         {% endif %}
     {% endfor %}
+    {% endif %}
+
+    {% if teacher %}
+    <tr>
+        <td style="font-weight: bold">院士姓名</td>
+        <td style="font-weight: bold">所属院系</td>
+    </tr>
+    {% for i in teacher %}
+    {% if i %}
+        <tr>
+            <td>{{ i[0] }}</td>
+            <td>{{ i[1] }}</td>
+        </tr>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
 </table>
 </body>
 </html>
