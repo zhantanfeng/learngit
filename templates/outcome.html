@@ -14,7 +14,11 @@
     {% for i in teacher_name %}
         {% if i|length > 1 %}
             <tr>
-                <td>{{ i }}</td>
+                {% if i[1] %}
+                    <td><a style="text-decoration: none" href={{ i[1] }}>{{ i[0] }}</a></td>
+                {% else %}
+                    <td>{{ i[0] }}</td>
+                {% endif %}
             </tr>
         {% endif %}
     {% endfor %}
@@ -28,7 +32,11 @@
     {% for i in teacher %}
     {% if i %}
         <tr>
-            <td>{{ i[0] }}</td>
+            {% if i[2] %}
+                <td><a style="text-decoration: none" href={{ i[2] }}> {{ i[0] }}</a></td>
+            {% else %}
+                <td>{{ i[0] }}</td>
+            {% endif %}
             <td>{{ i[1] }}</td>
         </tr>
     {% endif %}

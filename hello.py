@@ -60,7 +60,7 @@ class Compute(object):
         db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
                              charset='utf8')
         cursor = db.cursor()
-        sql = "select NAME,INSTITUTION_ID from es_teacher where SCHOOL_ID = %s and ACADEMICIAN > 1"
+        sql = "select NAME,INSTITUTION_ID,HOMEPAGE from es_teacher where SCHOOL_ID = %s and ACADEMICIAN > 1"
         cursor.execute(sql, (school_id))
         teacher = cursor.fetchall()
         return teacher
@@ -79,7 +79,7 @@ class Compute(object):
     def get_academicianName(self,institution_id):
         db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306, charset='utf8')
         cursor = db.cursor()
-        sql = "select NAME from es_teacher where INSTITUTION_ID = %s and ACADEMICIAN > 0 "
+        sql = "select NAME, HOMEPAGE from es_teacher where INSTITUTION_ID = %s and ACADEMICIAN > 0 "
         cursor.execute(sql, (institution_id))
         teacher_name = cursor.fetchall()
         return teacher_name
