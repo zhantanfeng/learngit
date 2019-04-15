@@ -26,7 +26,7 @@ def compute():
                     teacher_name1.append(i[0].lstrip("['").rstrip("']"))
                 print(teacher_name1)
             except BaseException as e:
-                teacher_name1 = []
+                teacher_name1 = [""]
             return render_template("outcome.html", teacher_name = teacher_name1)
     else:
         with ClusterRpcProxy(CONFIG) as rpc:
@@ -36,9 +36,8 @@ def compute():
                 for i in teacher:
                     institutionName = rpc.test.get_institution_name(i[1])
                     i[1] = institutionName[0].lstrip("['").rstrip("']")
-                print(teacher)
             except BaseException as e:
-                teacher = []
+                teacher = [["",""]]
             return render_template("outcome.html", teacher = teacher)
 
 
