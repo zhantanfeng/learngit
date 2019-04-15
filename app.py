@@ -23,7 +23,8 @@ def compute():
                 teacher_name = rpc.test.get_academicianName(institution_Id[0])
                 for i in teacher_name:
                     i[0] = i[0].lstrip("['").rstrip("']")
-                print(teacher_name)
+                if len(teacher_name) == 0:
+                    teacher_name = ["",""]
             except BaseException as e:
                 teacher_name = ["",""]
             return render_template("outcome.html", teacher_name = teacher_name)
@@ -35,6 +36,8 @@ def compute():
                 for i in teacher:
                     institutionName = rpc.test.get_institution_name(i[1])
                     i[1] = institutionName[0].lstrip("['").rstrip("']")
+                if len(teacher) == 0:
+                    teacher = [["","",""]]
             except BaseException as e:
                 teacher = [["","",""]]
             return render_template("outcome.html", teacher = teacher)
