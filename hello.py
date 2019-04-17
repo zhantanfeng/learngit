@@ -83,3 +83,13 @@ class Compute(object):
         cursor.execute(sql, (institution_id))
         teacher_name = cursor.fetchall()
         return teacher_name
+
+    @rpc
+    def get_institutionNamebyschoolName(self,schoolname):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME from es_institution where SCHOOL_NAME = %s "
+        cursor.execute(sql, (schoolname))
+        teacher_name = cursor.fetchall()
+        return teacher_name

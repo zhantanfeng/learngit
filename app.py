@@ -1,4 +1,6 @@
-from flask import Flask,render_template,request
+import json
+
+from flask import Flask,render_template,request,jsonify
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
 
@@ -49,6 +51,20 @@ def test():
         t = rpc.test.test()
         print(t)
     return render_template("a.html",t = t)
+
+@app.route("/get_institutionNamebyschoolName",methods=['GET','POST'])
+def get_institutionNamebyschoolName():
+    username = request.get_data()
+    if isinstance(username, bytes):
+        username = str(username, encoding='utf-8')
+    else:
+        username = json.JSONEncoder.default(username)
+    with ClusterRpcProxy(CONFIG) as rpc:
+        name = rpc.test.get_institutionNamebyschoolName(username)
+    name1 = []
+    for i in name:
+         name1.append(i[0].lstrip("['").rstrip("']"))
+    return jsonify(name1)
 
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
