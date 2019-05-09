@@ -2,9 +2,124 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>预览</title>
+    <link href="{{ url_for('static', filename='css/document.css') }}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-    {{ t }}
+    <form type="submit" method="post">
+        <button class="btn btn-info" onclick="javascript:this.form.action='document'";>文档导出</button>
+    </form>
+    <div style="margin:0 auto; width: 700px; " >
+        <h2 style="text-align: center">{{ schoolName }}科研简报{{ institutionName }}{{ time }}</h2>
+        <table class="table table-bordered" style="width: 600px; border: 2px solid black; margin:auto;" >
+            <tr>
+                <td colspan="2" class="title">一、院系概况</td>
+            </tr>
+            <tr>
+                <td class="nexttitle">国家重点学科</td>
+                <td class="nexttitle">评价</td>
+            </tr>
+            {% for i in maindis %}
+                <tr>
+                    <td>{{ i[0] }}</td>
+                    <td>{{ i[1] }}</td>
+                </tr>
+            {% endfor %}
+            <tr><td colspan="2" class="nexttitle">科研平台</td></tr>
+            <tr><td colspan="2">
+                {% if mainlab|length > 0 %}
+                    {% for i in mainlab %}
+                        {{ i }}<br>
+                    {% endfor %}
+                {% else %}
+                    &nbsp;
+                {% endif %}
+            </td></tr>
+            <tr><td colspan="2" class="nexttitle">院系成员</td></tr>
+            <tr><td colspan="2" height="400px" style="overflow:hidden"><img style="max-width:100%;max-height:100%" src="/static/1.png"></td></tr>
+        </table>
+
+        {% if project|length > 0 %}
+            <table class="table table-bordered" style="margin:auto; width: 600px; border: 2px solid black">
+                <tr><td colspan="5" class="title">二、科研项目</td></tr>
+                <tr>
+                    <td colspan="2" class="nexttitle">项目名称</td>
+                    <td colspan="3">{{ project }}</td>
+                </tr>
+                <tr><td colspan="5" class="nexttitle">项目成员</td></tr>
+                <tr>
+                    <td colspan="2" class="lasttitle">院士</td>
+                    <td colspan="3">
+                        {% if academician|length > 0 %}
+                            {% for i in academician %}
+                                {{ i }}&nbsp;
+                            {% endfor %}
+                            {% else %}
+                                &nbsp;
+                         {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="lasttitle">长江学者</td>
+                    <td colspan="3">
+                        {% if changjiang|length > 0 %}
+                            {% for i in changjiang %}
+                                {{ i }}&nbsp;
+                            {% endfor %}
+                            {% else %}
+                                &nbsp;
+                         {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="lasttitle">杰出青年</td>
+                    <td colspan="3">
+                        {% if outyouth|length > 0 %}
+                            {% for i in outyouth %}
+                                {{ i }}&nbsp;
+                            {% endfor %}
+                            {% else %}
+                                &nbsp;
+                         {% endif %}
+
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="lasttitle">其他成员</td>
+                    <td colspan="3">
+                        {% if member|length > 0 %}
+                            {% for i in member %}
+                                {{ i }}&nbsp;
+                            {% endfor %}
+                            {% else %}
+                                &nbsp;
+                         {% endif %}
+                    </td>
+                </tr>
+                <tr><td colspan="5" class="nexttitle">项目成果</td></tr>
+                <tr><td colspan="5" class="lasttitle">论文成果</td></tr>
+                <tr><td colspan="5">
+                    {% for i in paper %}
+                        《{{ i }}》<br>
+                    {% endfor %}
+                </td></tr>
+                <tr><td colspan="5" class="lasttitle">专利成果</td></tr>
+                <tr><td colspan="5">&nbsp;</td></tr>
+                <tr><td colspan="5" class="lasttitle">获奖成果</td></tr>
+                <tr><td colspan="5">
+                    {% if honor|length > 0 %}
+                        {% for i in honor %}
+                            {{ i }}
+                        {% endfor %}
+                    {% else %}
+                         &nbsp;
+                    {% endif %}
+
+
+                </td></tr>
+            </table>
+        {% endif %}
+    </div>
 </body>
 </html>

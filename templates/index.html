@@ -11,20 +11,42 @@
 </head>
 <body>
 <div class="form" >
-    <form type="submit"  id="registerForm" method="post" autocomplete="off" onkeydown="if(event.keyCode==13)return false;" >
+
+    <form type="submit"  id="registerForm" method="post" autocomplete="off" onkeydown="if(event.keyCode==13) return false;">
         <div class="form-group">
-            <input type="text"  class="form-control" id="schoolName" name="schoolName" class="input-text" required="required" onkeyup="autoComplete.start(event)" placeholder="学校名">
+            <input type="text"  class="form-control" id="schoolName" name="schoolName" class="input-text" autocomplete="on" required="required" onkeyup="autoComplete.start(event)" placeholder="学校名">
         </div>
         <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
         <div class="form-group">
-            <input type="text" class="form-control" id="institutionName" name="institutionName" class="input-text" onkeyup="autoComplete1.start(event)"  placeholder="学院名">
+            <input type="text" class="form-control" id="institutionName" name="institutionName" autocomplete="on" class="input-text" onkeyup="autoComplete1.start(event)"  placeholder="学院名">
+        </div>
+        <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
+        <div class="form-group">
+            <input type="text" class="form-control" id="teacherName" name="teacherName" class="input-text" autocomplete="on"  placeholder="老师名">
         </div>
         <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
         <div class="checkbox">
-            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='compute'"; value="查找院士" >
+            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='compute'"; value="查询院士" >
+        </div>
+        <div class="checkbox">
+            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='team'"; value="查看院系调研报告" >
+        </div>
+        <div class="checkbox">
+            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='team1'"; value="团队查询" >
         </div>
     </form>
 </div>
+
+<div>
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+
+
 <script>
     var autoComplete=new AutoComplete('schoolName','auto',['清华大学','北京大学','北京航空航天大学', "中国科学技术大学","复旦大学","中国人民大学","上海交通大学","南京大学","同济大学","浙江大学","南开大学","北京师范大学","武汉大学","西安交通大学","天津大学",
 "华中科技大学", "北京理工大学", "东南大学", "中山大学", "华东师范大学", "哈尔滨工业大学", "厦门大学", "西北工业大学", "中南大学", "大连理工大学", "四川大学", "电子科技大学", "华南理工大学", "吉林大学", '湖南大学', '重庆大学', '山东大学', '中国农业大学', '中国海洋大学', "中央民族大学", "东北大学", "兰州大学", "西北农林科技大学"]);
