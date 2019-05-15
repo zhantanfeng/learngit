@@ -726,7 +726,7 @@ class team(object):
         cursor = db.cursor()
         sql = "select NAME,ACADEMICIAN,OUTYOUTH,CHANGJIANG from es_teacher where NAME = %s and INSTITUTION_ID=%s"
         cursor.execute(sql, (teacherName, institution_id))
-        title = cursor.fetchall()
+        title = cursor.fetchone()
         return title
 
 
@@ -752,7 +752,7 @@ class title_search(object):
         cursor = db.cursor()
         sql = "select NAME,ACADEMICIAN,OUTYOUTH,CHANGJIANG from es_teacher where NAME = %s and INSTITUTION_ID=%s"
         cursor.execute(sql, (teacherName, institution_id))
-        title = cursor.fetchall()
+        title = cursor.fetchone()
         return title
     
     
