@@ -668,7 +668,7 @@ class document(object):
         # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
         # 保存文档
-        document.save("F://"+info["school_name"] + "科研简报" + info["institution_name"] + info["data"]+".docx")
+        document.save("./static/docx/"+info['school_name']+"科研简报"+info['institution_name']+info['data']+".docx")
 
 
 class team(object):
@@ -717,5 +717,49 @@ class team(object):
         cursor.execute(sql,(author_id))
         member = cursor.fetchall()
         return member
+
+    @rpc
+    #根据老师名获取老师头衔：是否院士，是否长江，是否杰青
+    def get_title(self, teacherName ,institution_id):
+        db = pymysql.connect(host='47.106.83.33',db='eds_base',user='root',password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME,ACADEMICIAN,OUTYOUTH,CHANGJIANG from es_teacher where NAME = %s and INSTITUTION_ID=%s"
+        cursor.execute(sql, (teacherName, institution_id))
+        title = cursor.fetchall()
+        return title
+
+
+
+class title_search(object):
+    name = "title_search"
+    @rpc
+    # 根据学校名和学院名获取学院id
+    def get_institutionId(self, schoolName, institutionName):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select ID from es_institution where SCHOOL_NAME = %s and NAME = %s "
+        cursor.execute(sql, (schoolName, institutionName))
+        institution_id = cursor.fetchone()
+        return institution_id
+
+    @rpc
+    #根据老师名获取老师头衔：是否院士，是否长江，是否杰青
+    def get_title(self, teacherName ,institution_id):
+        db = pymysql.connect(host='47.106.83.33',db='eds_base',user='root',password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME,ACADEMICIAN,OUTYOUTH,CHANGJIANG from es_teacher where NAME = %s and INSTITUTION_ID=%s"
+        cursor.execute(sql, (teacherName, institution_id))
+        title = cursor.fetchall()
+        return title
+    
+    
+    
+
+
+
+
 
 

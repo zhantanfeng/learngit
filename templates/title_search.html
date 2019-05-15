@@ -2,17 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>团队查询</title>
+    <title>头衔查询</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 </head>
 <body>
-<table class="table table-bordered" style="width: 35%">
+<table class="table table-bordered" style="width: 30%">
     <tr>
-        <td style="font-weight: bold">领军人物</td>
-        <td>{{ headname }}</td>
-    </tr>
-    <tr>
-        <td colspan="2" style="font-weight: bold">团队成员</td>
+        <td colspan="2" style="font-weight: bold">查询结果</td>
     </tr>
     <tr>
         <td style="font-weight: bold">院士</td>
@@ -38,14 +34,7 @@
             {% endfor %}
         </td>
     </tr>
-    <tr>
-        <td style="font-weight: bold">其他成员</td>
-        <td>
-            {% for i in other %}
-                {{ i }}
-            {% endfor %}
-        </td>
-    </tr>
+
 
 </table>
 </body>

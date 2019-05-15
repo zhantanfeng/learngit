@@ -19,7 +19,7 @@ def compute():
         institutionName = request.form.get('institutionName')
     if institutionName:
         with ClusterRpcProxy(CONFIG) as rpc:
-            institution_Id = rpc.test.get_institutionId(schoolName,institutionName)
+            institution_Id = rpc.test.get_institutionId(schoolName, institutionName)
             try:
                 teacher_name = rpc.test.get_academicianName(institution_Id[0])
                 for i in teacher_name:
@@ -203,45 +203,81 @@ def team1():
         schoolName = request.form.get('schoolName')
         institutionName = request.form.get('institutionName')
         teachername = request.form.get('teacherName')
-    # print(schoolName)
     with ClusterRpcProxy(CONFIG) as rpc:
         try:
             school = rpc.team.get_institutionId(schoolName,institutionName)
+            school_id = school[1]
+            institution_id = school[0]
+            with ClusterRpcProxy(CONFIG) as rpc:
+                teacherlist = rpc.team.get_teacher(school_id)
+            teacherlist1 = []
+            for i in teacherlist:
+                teacherlist1.append(i[0])
+            with ClusterRpcProxy(CONFIG) as rpc:
+                try:
+                    teahcher_id = rpc.team.get_teacher_id(teachername, school_id, institution_id)
+                    author = rpc.team.get_member(teahcher_id)
+                    paperauthor = []
+                    for i in author:
+                        paperauthor.append(i[0])
+                    member = []
+                    for i in paperauthor:
+                        a = i.lstrip("[").rstrip("]").strip("{").split(",")
+                        for i in a:
+                            if i.strip("{")[1:5] == "name":
+                                member.append(i[i.index(":") + 2:len(i) - 1])
+                    member = list(set(member))
+                    for i in member:
+                        if i not in teacherlist1:
+                            member.remove(i)
+                    member.remove(teachername)
+                    title = []
+                    with ClusterRpcProxy(CONFIG) as rpc:
+                        a = rpc.title_search.get_title(teachername,institution_id)
+                        if a[1] and a[1] > 0:
+                            teachername = teachername+"(院士)"
+                        if a[2] and a[2] > 0:
+                            if ")" in teachername:
+                                index1 = teachername.indexof(")")
+                                teachername = teachername[0:index1]+"杰出青年"+teachername[index1:]
+                            else:
+                                teachername = teachername+"(杰出青年)"
+                        if a[3] and a[3] > 0:
+                            if ")" in teachername:
+                                index1 = teachername.indexof(")")
+                                teachername = teachername[0:index1]+"长江学者"+teachername[index1:]
+                            else:
+                                teachername = teachername+"(长江学者)"
+
+                    for i in member:
+                        with ClusterRpcProxy(CONFIG) as rpc:
+                            a = rpc.title_search.get_title(i, institution_id)
+                            title.append(a)
+
+                    academician = []
+                    outyouth = []
+                    changjiang = []
+                    other = []
+                    for i in title:
+                        if i:
+                            if i[1] and i[1] > 0:
+                                academician.append(i[0])
+                            if i[2] and i[2] > 0:
+                                outyouth.append(i[0])
+                            if i[3] and i[3] > 0:
+                                changjiang.append(i[0])
+                    for i in member:
+                        if i not in academician and i not in outyouth and i not in changjiang:
+                            other.append(i)
+                    return render_template("team.html", headname=teachername, academician=academician,
+                                           outyouth=outyouth, changjiang=changjiang, other=other)
+                except BaseException as e:
+                    flash(u"没有此老师信息")
+                    return render_template("index.html")
         except BaseException as e:
-            return render_template("error.html")
-    school_id = school[1]
-    institution_id = school[0]
-    with ClusterRpcProxy(CONFIG) as rpc:
-        teacherlist = rpc.team.get_teacher(school_id)
-    teacherlist1 = []
-    for i in teacherlist:
-        teacherlist1.append(i[0])
-    # print(teacherlist1)
-    with ClusterRpcProxy(CONFIG) as rpc:
-        try:
-            teahcher_id = rpc.team.get_teacher_id(teachername,school_id,institution_id)
-            author = rpc.team.get_member(teahcher_id)
-            # print(teahcher_id)
-            paperauthor = []
-            for i in author:
-                paperauthor.append(i[0])
-            member = []
-            for i in paperauthor:
-                a = i.lstrip("[").rstrip("]").strip("{").split(",")
-                for i in a:
-                    if i.strip("{")[1:5] == "name":
-                        member.append(i[i.index(":") + 2:len(i) - 1])
-            member = list(set(member))
-            # print(member)
-            for i in member:
-                if i not in teacherlist1:
-                    member.remove(i)
-            member.remove(teachername)
-            # print(member)
-            return render_template("team.html", headname=teachername, member=member)
-        except BaseException as e:
-            flash(u"没有此老师信息")
+            flash(u"没有此学院信息")
             return render_template("index.html")
+
 
 @app.route("/document",methods=['GET','POST'])
 def document():
@@ -269,7 +305,45 @@ def document():
     # }
     with ClusterRpcProxy(CONFIG) as rpc:
         rpc.document.createdocument(info)
+
     return render_template("index.html")
+
+
+@app.route("/title_search",methods=['GET','POST'])
+def title_search():
+    if request.method == 'POST':
+        schoolName = request.form.get('schoolName')
+        institutionName = request.form.get('institutionName')
+        teachername = request.form.get('teacherName')
+    with ClusterRpcProxy(CONFIG) as rpc:
+        institution_id = rpc.title_search.get_institutionId(schoolName, institutionName)
+    if "," in teachername:
+        teacher = teachername.split(",")
+    elif "，" in teachername:
+        teacher = teachername.split("，")
+    else:
+        teacher = teachername.split(" ")
+    title = []
+
+    for i in teacher:
+        with ClusterRpcProxy(CONFIG) as rpc:
+            a = rpc.title_search.get_title(i,institution_id)
+            title.append(a)
+    academician = []
+    outyouth = []
+    changjiang = []
+    for i in title:
+        if i:
+            if i[1] and i[1] > 0:
+                academician.append(i[0])
+            if i[2] and i[2] > 0:
+                outyouth.append(i[0])
+            if i[3] and i[3] > 0:
+                changjiang.append(i[0])
+
+    return render_template("title_search.html",academician = academician,outyouth = outyouth,changjiang = changjiang)
+
+
 
 
 if __name__ == '__main__':
