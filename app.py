@@ -354,11 +354,12 @@ def paper_search():
         teacher_id = rpc.paper_search.get_teacherid(teacher_name,institution_id)
         if teacher_id:
             paper = rpc.paper_search.get_paper(teacher_id)
+            paper.sort(key=lambda ele: ele[1], reverse=True)
             return render_template("paper_search.html",paper = paper)
         else:
             flash(u"没有此老师信息")
             return render_template("index.html")
-
+                   
 
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
