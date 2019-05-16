@@ -754,7 +754,42 @@ class title_search(object):
         cursor.execute(sql, (teacherName, institution_id))
         title = cursor.fetchone()
         return title
-    
+
+class paper_search(object):
+    name = "paper_search"
+
+    @rpc
+    # 根据学校名和学院名获取学院id
+    def get_institutionId(self, schoolName, institutionName):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select ID from es_institution where SCHOOL_NAME = %s and NAME = %s "
+        cursor.execute(sql, (schoolName, institutionName))
+        institution_id = cursor.fetchone()
+        return institution_id
+
+    @rpc
+    #根据老师名和学院id获取老师的id
+    def get_teacherid(self,teacher_name,institution_id):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select ID from es_teacher where NAME = %s and INSTITUTION_ID = %s"
+        cursor.execute(sql,(teacher_name,institution_id))
+        teacher_id = cursor.fetchone()
+        return teacher_id
+
+   # 根据作者id,获取所有论文名和年份
+    @rpc
+    def get_paper(self, author_id):
+        db = pymysql.connect(host='47.104.236.183', db='eds_base', user='root', password='SLX..eds123', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "SELECT name,year from es_paper where author_id = %s"
+        cursor.execute(sql, (author_id))
+        paper = cursor.fetchall()
+        return paper
     
     
 

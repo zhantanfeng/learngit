@@ -343,7 +343,21 @@ def title_search():
 
     return render_template("title_search.html",academician = academician,outyouth = outyouth,changjiang = changjiang)
 
-
+@app.route("/paper_search",methods=["GET","POST"])
+def paper_search():
+    if request.method == 'POST':
+        school_name = request.form.get('schoolName')
+        institution_name = request.form.get('institutionName')
+        teacher_name = request.form.get('teacherName')
+    with ClusterRpcProxy(CONFIG) as rpc:
+        institution_id = rpc.paper_search.get_institutionId(school_name,institution_name)
+        teacher_id = rpc.paper_search.get_teacherid(teacher_name,institution_id)
+        if teacher_id:
+            paper = rpc.paper_search.get_paper(teacher_id)
+            return render_template("paper_search.html",paper = paper)
+        else:
+            flash(u"没有此老师信息")
+            return render_template("index.html")
 
 
 if __name__ == '__main__':
