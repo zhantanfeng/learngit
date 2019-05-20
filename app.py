@@ -1,7 +1,9 @@
 import json
-from flask import Flask, render_template, request, jsonify, flash, session
+from flask import Flask, render_template, request, jsonify, flash, session, url_for
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
+import urllib.request
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "dfdfdffdad"
@@ -75,7 +77,8 @@ def team():
         try:
             institutionId = rpc.document.get_institutionId(schoolName,institutionName)
         except BaseException as e:
-            return render_template("error.html")
+            flash(u"没有此学院信息")
+            return render_template("index.html")
         maindis = rpc.document.get_maindis(institutionId)
 
     for i in maindis:
@@ -307,10 +310,14 @@ def team1():
 def document():
     institution_info = session['institution_info']
     team = session['team']
+    path = os.path.join(os.path.expanduser("~"), 'Desktop')
     with ClusterRpcProxy(CONFIG) as rpc:
         rpc.document.createdocument(institution_info,team)
-    return render_template("index.html")
-
+    word = urllib.parse.quote(institution_info['school_name']+"科研简报"+institution_info['institution_name'])
+    url = 'http://47.106.83.33:8080/%s201703-201905.docx' % word
+    downPath = path+'\\'+institution_info['school_name']+"科研简报"+institution_info['institution_name']+institution_info['date']+".docx"
+    urllib.request.urlretrieve(url, downPath)
+    return render_template("a.html", institution_info=institution_info, team=team)
 
 @app.route("/title_search",methods=['GET','POST'])
 def title_search():
