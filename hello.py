@@ -260,15 +260,38 @@ class document(object):
         honor = cursor.fetchall()
         return honor
 
+    @rpc
+    # 根据老师名获取老师头衔：是否院士，是否长江，是否杰青
+    def get_title(self, teacherName, institution_id):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select NAME,ACADEMICIAN,OUTYOUTH,CHANGJIANG from es_teacher where NAME = %s and INSTITUTION_ID=%s"
+        cursor.execute(sql, (teacherName, institution_id))
+        title = cursor.fetchone()
+        return title
+
+    @rpc
+    # 根据老师名获取老师专利
+    def get_invention(self, teacherName):
+        db = pymysql.connect(host='47.104.236.183', db='lw_temp', user='root', password='SLX..eds123', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select title,date1 from cnki_zhuanli where author_list like '%%%s%%'" %(teacherName)
+        cursor.execute(sql)
+        invention = cursor.fetchall()
+        return invention
+
     # 创建文档
     @rpc
-    def createdocument(self,info):
+    def createdocument(self,institution_info, team):
         document = Document()
+        document.styles['Normal'].font.name = u'微软雅黑'
+        document.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
         # 创建段落
         p = document.add_paragraph("")
         # 设置段落左右居中
-
-        # p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        #p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         # 设置段落的段前间距
         p.paragraph_format.space_before = Pt(5)
         # 设置段落得断后间距
@@ -277,7 +300,8 @@ class document(object):
         p.paragraph_format.line_spacing = Pt(8)
         # 设置段落间距的格式为最小值
         p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.AT_LEAST
-        run = p.add_run(info["school_name"] + "科研简报" + info["institution_name"] + info["data"])
+        run = p.add_run(
+            institution_info["school_name"] + "科研简报" + institution_info["institution_name"] + institution_info["date"])
         # 设置字体
         run.font.name = u'宋体'
         run._element.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')
@@ -303,16 +327,13 @@ class document(object):
         # 在表格中写入文字
         run = table.cell(0, 0).paragraphs[0].add_run("一、院系概况")
         # 设置表格中字体
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
+
         # 字体大小
         run.font.size = Pt(15)
         # 字体大小
         run.font.color.rgb = RGBColor(91, 155, 213)
         # 是否加粗
         run.bold = True
-        # 字上下居中
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
         table = document.add_table(rows=1, cols=2)
         # 表格风格
@@ -324,27 +345,25 @@ class document(object):
             row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
 
         run = table.cell(0, 0).paragraphs[0].add_run("国家重点学科")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(14)
-        run.bold = True
-        run.font.color.rgb = RGBColor(237, 125, 49)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
         table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
-        run = table.cell(0, 1).paragraphs[0].add_run("评价")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
         run.font.size = Pt(14)
         run.bold = True
         run.font.color.rgb = RGBColor(237, 125, 49)
+        run = table.cell(0, 1).paragraphs[0].add_run("评价")
         table.cell(0, 1).paragraphs[0].paragraph_format.space_before = Pt(2)
         table.cell(0, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
         table.cell(0, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
+
+
+        run.font.size = Pt(14)
+        run.bold = True
+        run.font.color.rgb = RGBColor(237, 125, 49)
         # 创建表格
-        table = document.add_table(rows=len(info["discipline_name"]), cols=2)
+        table = document.add_table(rows=len(institution_info["maindis"]), cols=2)
         # 表格风格
         table.style = "Table Grid"
 
@@ -355,11 +374,11 @@ class document(object):
 
         key = []
         value = []
-        for i in info["discipline_name"].keys():
+        for i in institution_info["maindis"].keys():
             key.append(i)
-        for i in info["discipline_name"].values():
+        for i in institution_info["maindis"].values():
             value.append(i)
-        count = len(info["discipline_name"])
+        count = len(institution_info["maindis"])
 
         for i in range(0, count):
             run = table.cell(i, 0).paragraphs[0].add_run(key[i])
@@ -380,14 +399,14 @@ class document(object):
             table.cell(i, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
             table.cell(i, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
+
         table = document.add_table(rows=1, cols=1)
         table.style = "Table Grid"
         for row in table.rows:
             row.height = Pt(30)
             row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
         run = table.cell(0, 0).paragraphs[0].add_run("科研平台")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
+
         run.font.size = Pt(14)
         run.font.color.rgb = RGBColor(237, 125, 49)
         run.bold = True
@@ -395,280 +414,275 @@ class document(object):
         table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
         table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
+
         table = document.add_table(rows=1, cols=1)
         table.style = "Table Grid"
         for row in table.rows:
             row.height = Pt(30)
             row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run(
-            i + "  " for i in info["mainlab"][0: (len(info["mainlab"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
+        run = table.cell(0, 0).paragraphs[0].add_run(institution_info["mainlab"])
+
         run.font.size = Pt(12)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
         table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
+        # 团队介绍
         table = document.add_table(rows=1, cols=1)
         table.style = "Table Grid"
         for row in table.rows:
             row.height = Pt(30)
             row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("院系成员")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(14)
-        run.font.color.rgb = RGBColor(237, 125, 49)
-        run.bold = True
+        run = table.cell(0, 0).paragraphs[0].add_run("二、科研团队")
         table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
         table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
 
-        # 插入图片
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(290)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-
-        item = table.cell(0, 0)
-        p = item.paragraphs[0]
-        p.add_run().add_picture(info["picture"], Pt(300), Pt(280))
-        # p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("二、科研项目")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
         run.font.size = Pt(15)
         run.font.color.rgb = RGBColor(91, 155, 213)
         run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        table = document.add_table(rows=1, cols=5)
-        table.cell(0, 0)
-        table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-
-        run = table.cell(0, 0).paragraphs[0].add_run("项目名称")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(14)
-        run.font.color.rgb = RGBColor(237, 125, 49)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(0, 2).paragraphs[0].add_run(info["project_name"])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(0, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("项目成员")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(14)
-        run.font.color.rgb = RGBColor(237, 125, 49)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        table = document.add_table(rows=4, cols=5)
-        table.style = "Table Grid"
-        for i in range(0, 4):
-            table.cell(i, 0)
-            table.cell(i, 1).merge(table.cell(i, 2)).merge(table.cell(i, 3)).merge(table.cell(i, 4))
-
-        run = table.cell(0, 0).paragraphs[0].add_run("院士")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(0, 2).paragraphs[0].add_run(
-            i + "  " for i in info["academician_list"][0: (len(info["academician_list"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(0, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(1, 0).paragraphs[0].add_run("长江学者")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(1, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(1, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(1, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(1, 2).paragraphs[0].add_run(
-            i + "  " for i in info["changjiang_list"][0: (len(info["changjiang_list"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(1, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(1, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(1, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(1, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-        run = table.cell(2, 0).paragraphs[0].add_run("杰出青年")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(2, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(2, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(2, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(2, 2).paragraphs[0].add_run(
-            i + "  " for i in info["outyouth_list"][0: (len(info["outyouth_list"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(2, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(2, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(2, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(2, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-        run = table.cell(3, 0).paragraphs[0].add_run("其他成员")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(3, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(3, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(3, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        run = table.cell(3, 2).paragraphs[0].add_run(
-            i + "  " for i in info["other_list"][0: (len(info["other_list"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(3, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(3, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(3, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(3, 2).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("项目成果")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(14)
-        run.font.color.rgb = RGBColor(237, 125, 49)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("论文成果")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        run = table.cell(0, 0).paragraphs[0].add_run(
-            "《" + i + "》  " for i in info["paper"][0: (len(info["paper"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("专利成果")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        run = table.cell(0, 0).paragraphs[0].add_run(i for i in info["invention"][0: (len(info["invention"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
 
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        for row in table.rows:
-            row.height = Pt(30)
-            row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run("获奖成果")
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        run.bold = True
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        for i in team:
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("项目成员")
 
-        table = document.add_table(rows=1, cols=1)
-        table.style = "Table Grid"
-        run = table.cell(0, 0).paragraphs[0].add_run(i for i in info["award"][0: (len(info["award"]))])
-        run.font.name = u'微软雅黑'
-        run._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        run.font.size = Pt(12)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
-        table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
-        table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
-        # table.cell(0, 0).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            run.font.size = Pt(14)
+            run.font.color.rgb = RGBColor(237, 125, 49)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            # 领军人物
+            table = document.add_table(rows=1, cols=5)
+            table.style = "Table Grid"
+            table.cell(0, 0)
+            table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
+
+            run = table.cell(0, 0).paragraphs[0].add_run("领军人物")
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+            run.font.size = Pt(12)
+            run.bold = True
+            run = table.cell(0, 2).paragraphs[0].add_run(i['head_name'])
+
+            run.font.size = Pt(12)
+            table.cell(0, 2).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 2).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 2).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            if len(i["changjiang_list"]) > 0:
+                table = document.add_table(rows=1, cols=5)
+                table.style = "Table Grid"
+                table.cell(0, 0)
+                table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
+                run = table.cell(0, 0).paragraphs[0].add_run("院士")
+                run.font.size = Pt(12)
+                run.bold = True
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+                run = table.cell(0, 1).paragraphs[0].add_run(j + " " for j in i['academician_list'])
+
+                run.font.size = Pt(12)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            if len(i["changjiang_list"]) > 0:
+                table = document.add_table(rows=1, cols=5)
+                table.style = "Table Grid"
+                table.cell(0, 0)
+                table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
+
+                run = table.cell(0, 0).paragraphs[0].add_run("长江学者")
+                run.font.size = Pt(12)
+                run.bold = True
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+                run = table.cell(0, 1).paragraphs[0].add_run(j + " " for j in i["changjiang_list"])
+
+                run.font.size = Pt(12)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            if len(i['outyouth_list']) > 0:
+                table = document.add_table(rows=1, cols=5)
+                table.style = "Table Grid"
+                table.cell(0, 0)
+                table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
+                run = table.cell(0, 0).paragraphs[0].add_run("杰出青年")
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+                run.font.size = Pt(12)
+                run.bold = True
+
+                run = table.cell(0, 1).paragraphs[0].add_run(j + " " for j in i["outyouth_list"])
+
+                run.font.size = Pt(12)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_before = Pt(2)
+                table.cell(0, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
+                table.cell(0, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            # 其他成员
+            table = document.add_table(rows=1, cols=5)
+            table.style = "Table Grid"
+            table.cell(0, 0)
+            table.cell(0, 1).merge(table.cell(0, 2)).merge(table.cell(0, 3)).merge(table.cell(0, 4))
+            run = table.cell(0, 0).paragraphs[0].add_run("其他成员")
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+            run.font.size = Pt(12)
+            run.bold = True
+
+
+            run = table.cell(0, 1).paragraphs[0].add_run(j + " " for j in i["other_list"])
+
+            run.font.size = Pt(12)
+            table.cell(0, 1).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 1).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 1).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            # 团队研究方向
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("团队研究方向")
+            run.font.size = Pt(14)
+            run.font.color.rgb = RGBColor(237, 125, 49)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run(i["team_direction"])
+
+            run.font.size = Pt(12)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            # 团队成果
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("团队成果")
+
+            run.font.size = Pt(14)
+            run.font.color.rgb = RGBColor(237, 125, 49)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            # 论文成果
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("论文成果")
+
+            run.font.size = Pt(12)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            run = table.cell(0, 0).paragraphs[0].add_run("《" + j + "》" for j in i["paper"])
+
+            run.font.size = Pt(12)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            # 专利成果
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("专利成果")
+
+            run.font.size = Pt(12)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            run = table.cell(0, 0).paragraphs[0].add_run("《" + j + "》" for j in i["invention"])
+
+            run.font.size = Pt(12)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+
+            # 获奖成果
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+            run = table.cell(0, 0).paragraphs[0].add_run("获奖成果")
+
+            run.font.size = Pt(12)
+            run.bold = True
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            run = table.cell(0, 0).paragraphs[0].add_run(j for j in i["award"])
+
+            run.font.size = Pt(12)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)
+            table.cell(0, 0).paragraphs[0].paragraph_format.space_after = Pt(6)
+            table.cell(0, 0).paragraphs[0].paragraph_format.line_spacing = Pt(30)
+
+            table = document.add_table(rows=1, cols=1)
+            table.style = "Table Grid"
+            for row in table.rows:
+                row.height = Pt(30)
+                row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
+
 
         # 保存文档
-        document.save("./static/docx/"+info['school_name']+"科研简报"+info['institution_name']+info['data']+".docx")
+        document.save("./static/docx/"+institution_info['school_name']+"科研简报"+institution_info['institution_name']+institution_info['date']+".docx")
 
 
 class team(object):

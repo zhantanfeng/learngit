@@ -77,7 +77,7 @@ def team():
         except BaseException as e:
             return render_template("error.html")
         maindis = rpc.document.get_maindis(institutionId)
-        # print(maindis)
+
     for i in maindis:
         try:
             with ClusterRpcProxy(CONFIG) as rpc:
@@ -85,85 +85,11 @@ def team():
                 i[0] = discipline_name
         except:
             pass
-    # print(maindis)
+    info_maindis = {}
+    for i in maindis:
+        info_maindis[i[0]] = i[1]
     with ClusterRpcProxy(CONFIG) as rpc:
         mainlab = rpc.document.get_lab(schoolName,institutionName)
-    # print(mainlab)
-
-    #TODO 处理院系老师之间的关系
-    with ClusterRpcProxy(CONFIG) as rpc:
-        teacher = rpc.document.get_teacher_info(institutionId)
-    teacherlist = []
-    for i in teacher:
-        teacherlist.append(i[1])
-    projectlist = []
-
-    with ClusterRpcProxy(CONFIG) as rpc:
-        project = rpc.document.get_project(schoolName)
-    for i in project:
-        if i[0] in teacherlist:
-            projectlist.append(i)
-    projectlist.sort(key=lambda ele: ele[2], reverse=True)
-    # print(projectlist)
-
-    if len(projectlist) != 0:
-        project_name = []
-        for i in projectlist:
-            project_name.append(i[1])
-        headname = projectlist[0][0]
-        with ClusterRpcProxy(CONFIG) as rpc:
-            head_id = rpc.document.get_teacher_id(headname, institutionId)
-            paper = rpc.document.get_paper_info_2(head_id[0])
-            honor = rpc.document.get_honor_2(head_id[0])
-        #print(head_id[0])
-        papername = []
-        paperauthor = []
-        member = []
-        # print(paper)
-        for i in paper:
-            papername.append(i[1])
-            paperauthor.append(i[0])
-        # print(papername)
-        # print(paperauthor)
-        for i in paperauthor:
-            a = i.lstrip("[").rstrip("]").strip("{").split(",")
-            for i in a:
-                if i.strip("{")[1:5] == "name":
-                    member.append(i[i.index(":") + 2:len(i) - 1])
-        member = list(set(member))
-        # print(member)
-        academician = []
-        outyouth = []
-        changjiang = []
-
-        for i in member:
-            for j in teacher:
-                if i == j[1]:
-                    if j[2] and j[2] > 0:
-                        academician.append(i)
-                        if i in member:
-                            member.remove(i)
-                    if j[3] and j[3] > 0 :
-                        outyouth.append(i)
-                        if i in member:
-                            member.remove(i)
-                    if j[4] and j[4] > 0:
-                        changjiang.append(i)
-                        if i in member:
-                            member.remove(i)
-        honorlist = []
-        for i in honor:
-            if i[-1:] == '奖':
-                honorlist.append(i)
-    else:
-        project_name = [[]]
-        papername = []
-        member = []
-        honorlist = []
-        academician = []
-        outyouth = []
-        changjiang = []
-
 
     time = time.strftime("%Y:%m")
     a = time.split(":")
@@ -172,30 +98,128 @@ def team():
     else:
         mouth = str(int(a[1]) - 2)
     time = str(int(a[0]) - 2) + mouth + "-" + a[0] + a[1]
-    # print(time)
-    info_maindis = {}
-    for i in maindis:
-        info_maindis[i[0]] = i[1]
-    # print(info_maindis)
-    info = {
-        "school_name": schoolName,
-        "institution_name": institutionName,
-        "data": time,
-        "discipline_name": info_maindis,
-        "mainlab": mainlab,
-        "picture": "1.png",
-        "project_name": project_name[0],
-        "academician_list": academician,
-        "changjiang_list": changjiang,
-        "outyouth_list": outyouth,
-        "other_list": member,
-        "paper": papername,
-        "invention": [],
-        "award": honorlist
-    }
-    session['doc_info'] = info
-    return render_template("a.html",schoolName=schoolName,institutionName=institutionName,time=time,maindis=maindis,mainlab=mainlab,project=project_name[0],paper=papername,academician=academician,changjiang=changjiang,outyouth=outyouth,member=member,honor=honorlist)
+    #学院信息
+    institution_info = {}
+    institution_info['school_name'] = schoolName
+    institution_info['institution_name'] = institutionName
+    institution_info['date'] = time
+    institution_info['maindis'] = info_maindis
+    institution_info['mainlab'] = mainlab
+    # print(institution_info)
 
+
+    #TODO 处理院系老师之间的关系
+    #获取学院中所有老师的名字
+    with ClusterRpcProxy(CONFIG) as rpc:
+        teacher = rpc.document.get_teacher_info(institutionId)
+    teacherlist = []
+    for i in teacher:
+        teacherlist.append(i[1])
+
+    #获取学院所做过的项目及项目带头人信息
+    projectlist = []
+    with ClusterRpcProxy(CONFIG) as rpc:
+        project = rpc.document.get_project(schoolName)
+    for i in project:
+        if i[0] in teacherlist:
+            projectlist.append(i)
+    projectlist.sort(key=lambda ele: ele[2], reverse=True)
+    #项目带头人
+    head_name = []
+    #团队信息
+    team = []
+
+    if len(projectlist) != 0:
+        for i in projectlist:
+            head_name.append(i[0])
+        for i in head_name[0:3]:
+            head = i
+            teaminfo = {}
+
+            with ClusterRpcProxy(CONFIG) as rpc:
+                a = rpc.document.get_title(head, institutionId)
+                if a[1] and a[1] > 0:
+                    head = head + "(院士)"
+                if a[3] and a[3] > 0:
+                    if ")" in head:
+                        index1 = head.index(")")
+                        head = head[0:index1] + "长江学者" + head[index1:]
+                    else:
+                        head = head + "(长江学者)"
+                if a[2] and a[2] > 0:
+                    if ")" in head:
+                        index1 = head.index(")")
+                        head = head[0:index1] + ",杰出青年" + head[index1:]
+                    else:
+                        head = head + "(杰出青年)"
+
+
+            with ClusterRpcProxy(CONFIG) as rpc:
+                invention = rpc.document.get_invention(i)
+                head_id = rpc.document.get_teacher_id(i, institutionId)
+                paper = rpc.document.get_paper_info_2(head_id[0])
+                honor = rpc.document.get_honor_2(head_id[0])
+
+            invention.sort(key=lambda ele: ele[1], reverse=True)
+            invention_info = []
+            for i in invention:
+                invention_info.append(i[0])
+            invention_info = list(set(invention_info))[0:10]
+            papername = []
+            paperauthor = []
+            member = []
+            for i in paper:
+                papername.append(i[1])
+                paperauthor.append(i[0])
+            for i in paperauthor:
+                a = i.lstrip("[").rstrip("]").strip("{").split(",")
+                for i in a:
+                    if i.strip("{")[1:5] == "name":
+                        member.append(i[i.index(":") + 2:len(i) - 1])
+            member = list(set(member))
+            if "(" in head and head[0:head.index("(")] in member:
+                member.remove(head[0:head.index("(")])
+            elif head in member:
+                member.remove(head)
+            if len(member) == 0:
+                continue
+            academician = []
+            outyouth = []
+            changjiang = []
+
+            for i in member:
+                for j in teacher:
+                    if i == j[1]:
+                        if j[2] and j[2] > 0:
+                            academician.append(i)
+                            if i in member:
+                                member.remove(i)
+                        if j[3] and j[3] > 0 :
+                            outyouth.append(i)
+                            if i in member:
+                                member.remove(i)
+                        if j[4] and j[4] > 0:
+                            changjiang.append(i)
+                            if i in member:
+                                member.remove(i)
+            honorlist = []
+            for i in honor:
+                if i[-1:] == '奖':
+                    honorlist.append(i)
+
+            teaminfo['head_name'] = head
+            teaminfo['academician_list'] = academician
+            teaminfo['changjiang_list'] = changjiang
+            teaminfo['outyouth_list'] = outyouth
+            teaminfo['other_list'] = member
+            teaminfo['team_direction'] = "智能制造"
+            teaminfo['paper'] = papername
+            teaminfo['invention'] = invention_info
+            teaminfo['award'] = honorlist
+            team.append(teaminfo)
+    session['institution_info'] = institution_info
+    session['team'] = team
+    return render_template("a.html",institution_info = institution_info,team = team)
 
 @app.route("/team1",methods=['GET','POST'])
 def team1():
@@ -281,31 +305,10 @@ def team1():
 
 @app.route("/document",methods=['GET','POST'])
 def document():
-    info = session['doc_info']
-    print(info)
-    # info = {
-    #     "school_name": "清华大学",
-    #     "institution_name": "物理系",
-    #     "data": time,
-    #     "discipline_name": {
-    #         "物理学": "A+",
-    #         "天体物理": "A+"
-    #     },
-    #     "mainlab": "低维量子物理国家重点实验室",
-    #     "picture": "1.png",
-    #     "project_name": "层状关联电子体系中的宏观量子物性",
-    #     "academician_list": ["顾秉林", "朱邦芬", "范守善", "李家明", "陈难先", "薛其坤"],
-    #     "changjiang_list": ["尤力", "翁征宇", "张广铭", "王亚愚", "王向斌", "段文晖", "陈曦", "姜开利", "龙桂鲁", "赵永刚", "马旭村", "何珂", "鲁巍",
-    #                         "姚宏"],
-    #     "outyouth_list": ["陈宇林", "周树云", "刘峥", "于浦"],
-    #     "other_list": ["郑盟锟", "宋灿立", "徐勇", "何联毅", "江万军", "李渭"],
-    #     "paper": ["体心立方铁中裂纹扩展的结构演化研究", "bcc Fe中刃型位错的结构及能量学研究"],
-    #     "invention": ["一种受激拉曼差分方法及其装置制造方法及图纸"],
-    #     "award": ["国家科技进步一等奖"]
-    # }
+    institution_info = session['institution_info']
+    team = session['team']
     with ClusterRpcProxy(CONFIG) as rpc:
-        rpc.document.createdocument(info)
-
+        rpc.document.createdocument(institution_info,team)
     return render_template("index.html")
 
 
@@ -359,7 +362,7 @@ def paper_search():
         else:
             flash(u"没有此老师信息")
             return render_template("index.html")
-                   
+
 
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
