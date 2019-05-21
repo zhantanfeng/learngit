@@ -215,7 +215,7 @@ def team():
             teaminfo['changjiang_list'] = changjiang
             teaminfo['outyouth_list'] = outyouth
             teaminfo['other_list'] = member
-            teaminfo['team_direction'] = "智能制造"
+            teaminfo['team_direction'] = ""
             teaminfo['paper'] = papername
             teaminfo['invention'] = []
             teaminfo['award'] = honorlist

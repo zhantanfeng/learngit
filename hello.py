@@ -111,7 +111,6 @@ class document(object):
         sql = "select ID from es_institution where SCHOOL_NAME = %s and NAME = %s "
         cursor.execute(sql, (schoolName, institutionName))
         institution_id = cursor.fetchone()
-        institution_id = institution_id[0]
         return institution_id
 
     # 根据学院id获取学院中所有老师的ID,姓名，是否院士，是否杰出青年，是否长江学者
