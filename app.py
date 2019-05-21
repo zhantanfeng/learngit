@@ -75,7 +75,7 @@ def team():
         institutionName = request.form.get('institutionName')
     with ClusterRpcProxy(CONFIG) as rpc:
         try:
-            institutionId = rpc.document.get_institutionId(schoolName,institutionName)
+            institutionId = rpc.document.get_institutionId(schoolName,institutionName)[0]
         except BaseException as e:
             flash(u"没有此学院信息")
             return render_template("index.html")
@@ -220,7 +220,6 @@ def team():
             teaminfo['invention'] = []
             teaminfo['award'] = honorlist
             team.append(teaminfo)
-    session.clear()
     session['institution_info'] = institution_info
     session['team'] = team
     return render_template("a.html",institution_info = institution_info,team = team)
