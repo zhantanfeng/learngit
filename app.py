@@ -1,5 +1,5 @@
 import json
-from flask import Flask, render_template, request, jsonify, flash, session, url_for
+from flask import Flask, render_template, request, jsonify, flash, session
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
 import urllib.request
@@ -158,16 +158,16 @@ def team():
 
 
             with ClusterRpcProxy(CONFIG) as rpc:
-                invention = rpc.document.get_invention(i)
+                # invention = rpc.document.get_invention(i)
                 head_id = rpc.document.get_teacher_id(i, institutionId)
                 paper = rpc.document.get_paper_info_2(head_id[0])
                 honor = rpc.document.get_honor_2(head_id[0])
 
-            invention.sort(key=lambda ele: ele[1], reverse=True)
-            invention_info = []
-            for i in invention:
-                invention_info.append(i[0])
-            invention_info = list(set(invention_info))[0:10]
+            # invention.sort(key=lambda ele: ele[1], reverse=True)
+            # invention_info = []
+            # for i in invention:
+            #     invention_info.append(i[0])
+            # invention_info = list(set(invention_info))[0:10]
             papername = []
             paperauthor = []
             member = []
@@ -217,7 +217,7 @@ def team():
             teaminfo['other_list'] = member
             teaminfo['team_direction'] = "智能制造"
             teaminfo['paper'] = papername
-            teaminfo['invention'] = invention_info
+            teaminfo['invention'] = []
             teaminfo['award'] = honorlist
             team.append(teaminfo)
     session['institution_info'] = institution_info
@@ -310,14 +310,9 @@ def team1():
 def document():
     institution_info = session['institution_info']
     team = session['team']
-    path = os.path.join(os.path.expanduser("~"), 'Desktop')
     with ClusterRpcProxy(CONFIG) as rpc:
         rpc.document.createdocument(institution_info,team)
-    word = urllib.parse.quote(institution_info['school_name']+"科研简报"+institution_info['institution_name'])
-    url = 'http://47.106.83.33:8080/%s201703-201905.docx' % word
-    downPath = path+'\\'+institution_info['school_name']+"科研简报"+institution_info['institution_name']+institution_info['date']+".docx"
-    urllib.request.urlretrieve(url, downPath)
-    return render_template("a.html", institution_info=institution_info, team=team)
+    return render_template("a.html",institution_info = institution_info,team = team)
 
 @app.route("/title_search",methods=['GET','POST'])
 def title_search():

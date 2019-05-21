@@ -5,13 +5,30 @@
     <title>预览</title>
     <link href="{{ url_for('static', filename='css/document.css') }}" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="/static/jquery-3.1.1/jquery-3.1.1/jquery-3.1.1.js"></script>
+    <script>
+        function document1(){
+            var title=document.getElementById("title").innerHTML;
+            $.ajax({
+                type: 'POST',
+                url: "/document",
+                success: function () {
+                    window.location.href='http://47.106.83.33:8080/'+title+'.docx';
+                },
+                error:function () {
+                    alert("没有此文档！")
+                }
+            });
+        }
+
+    </script>
 </head>
 <body>
     <form type="submit" method="post">
-        <button class="btn btn-info" onclick="javascript:this.form.action='document'";>文档导出</button>
+            <button class="btn btn-info" onclick="document1()">文档导出</button>
     </form>
     <div style="margin:0 auto; width: 700px; " >
-        <h2 style="text-align: center">{{ institution_info['school_name'] }}科研简报{{ institution_info['institution_name'] }}{{ institution_info['date'] }}</h2>
+        <h2 id="title" style="text-align: center" >{{ institution_info['school_name'] }}科研简报{{ institution_info['institution_name'] }}{{ institution_info['date'] }}</h2>
         <table class="table table-bordered" style="width: 600px; border: 1px solid black; margin:auto;" >
             <tr>
                 <td colspan="2" class="title">一、院系概况</td>
