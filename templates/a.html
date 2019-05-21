@@ -13,16 +13,18 @@
                 type: 'POST',
                 url: "/document",
                 success: function () {
-                    window.location.href='http://47.106.83.33:8080/'+title+'.docx';
-                }
-            });
+             window.location.href='http://47.106.83.33:8080/'+title+'.docx';
+            {# window.location.href='http://www.baidu.com';#}
+{#             window.open('http://47.106.83.33:8080/'+title+'.docx');#}
+             }
+        });
         }
-
     </script>
 </head>
 <body>
     <form type="submit" method="post">
             <button class="btn btn-info" onclick="document1()">文档导出</button>
+
     </form>
     <div style="margin:0 auto; width: 1000px; " >
         <h2 id="title" style="text-align: center" >{{ institution_info['school_name'] }}科研简报{{ institution_info['institution_name'] }}{{ institution_info['date'] }}</h2>

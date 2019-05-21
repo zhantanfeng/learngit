@@ -69,10 +69,14 @@ def get_institutionNamebyschoolName():
 
 @app.route("/team",methods=['GET','POST'])
 def team():
+
     import time
     if request.method == 'POST':
         schoolName = request.form.get('schoolName')
         institutionName = request.form.get('institutionName')
+    if not schoolName:
+        schoolName = session['institution_info']['school_name']
+        institutionName = session['institution_info']['institution_name']
     with ClusterRpcProxy(CONFIG) as rpc:
         try:
             institutionId = rpc.document.get_institutionId(schoolName,institutionName)[0]
@@ -220,8 +224,21 @@ def team():
             teaminfo['invention'] = []
             teaminfo['award'] = honorlist
             team.append(teaminfo)
+    # with ClusterRpcProxy(CONFIG) as rpc:
+    #     rpc.document.createdocument(institution_info, team)
     session['institution_info'] = institution_info
     session['team'] = team
+    return render_template("a.html",institution_info = institution_info,team = team)
+
+
+
+
+@app.route("/document",methods=['GET','POST'])
+def document():
+    institution_info = session['institution_info']
+    team = session['team']
+    with ClusterRpcProxy(CONFIG) as rpc:
+        rpc.document.createdocument(institution_info,team)
     return render_template("a.html",institution_info = institution_info,team = team)
 
 @app.route("/team1",methods=['GET','POST'])
@@ -304,15 +321,6 @@ def team1():
         except BaseException as e:
             flash(u"没有此学院信息")
             return render_template("index.html")
-
-
-@app.route("/document",methods=['GET','POST'])
-def document():
-    institution_info = session['institution_info']
-    team = session['team']
-    with ClusterRpcProxy(CONFIG) as rpc:
-        rpc.document.createdocument(institution_info,team)
-    return render_template("a.html",institution_info = institution_info,team = team)
 
 @app.route("/title_search",methods=['GET','POST'])
 def title_search():
