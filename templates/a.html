@@ -27,9 +27,9 @@
     <form type="submit" method="post">
             <button class="btn btn-info" onclick="document1()">文档导出</button>
     </form>
-    <div style="margin:0 auto; width: 700px; " >
+    <div style="margin:0 auto; width: 1000px; " >
         <h2 id="title" style="text-align: center" >{{ institution_info['school_name'] }}科研简报{{ institution_info['institution_name'] }}{{ institution_info['date'] }}</h2>
-        <table class="table table-bordered" style="width: 600px; border: 1px solid black; margin:auto;" >
+        <table class="table table-bordered" style="width: 800px; border: 1px solid black; margin:auto;" >
             <tr>
                 <td colspan="2" class="title">一、院系概况</td>
             </tr>
@@ -59,7 +59,7 @@
         {% if team|length > 0 %}
             {% for i in team %}
 
-                <table class="table table-bordered" style="margin:auto; width: 600px; border: 1px solid black">
+                <table class="table table-bordered" style="margin:auto; width: 800px; border: 1px solid black">
                     <tr>
                         <td colspan="5" class="nexttitle">项目成员</td>
                     </tr>

@@ -420,7 +420,7 @@ class document(object):
         for row in table.rows:
             row.height = Pt(30)
             row.height_rule = WD_ROW_HEIGHT_RULE.AT_LEAST
-        run = table.cell(0, 0).paragraphs[0].add_run(institution_info["mainlab"])
+        run = table.cell(0, 0).paragraphs[0].add_run(j + " " for j in institution_info['mainlab'])
 
         run.font.size = Pt(12)
         table.cell(0, 0).paragraphs[0].paragraph_format.space_before = Pt(2)

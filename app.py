@@ -220,6 +220,7 @@ def team():
             teaminfo['invention'] = []
             teaminfo['award'] = honorlist
             team.append(teaminfo)
+    session.clear()
     session['institution_info'] = institution_info
     session['team'] = team
     return render_template("a.html",institution_info = institution_info,team = team)
