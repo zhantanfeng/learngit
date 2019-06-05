@@ -803,9 +803,19 @@ class paper_search(object):
         cursor.execute(sql, (author_id))
         paper = cursor.fetchall()
         return paper
-    
-    
 
+class teacher_update(object):
+    name = "teacher_update"
+
+    @rpc
+    # 将数据插入到teacher_update_info表中，等待审核
+    def insert_teacher_info(self, teacher_info):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "insert into teacher_update_info(name,title,sex,school,institution,email,tel,birthyear,fields,discipline) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        cursor.execute(sql, (teacher_info['name'],teacher_info['title'],teacher_info['sex'],teacher_info['school'],teacher_info['institution'],teacher_info['email'],teacher_info['tel'],teacher_info['birthyear'],teacher_info['fields'],teacher_info['discipline']))
+        db.commit()
 
 
 

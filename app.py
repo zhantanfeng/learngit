@@ -1,9 +1,20 @@
 import json
+
 from flask import Flask, render_template, request, jsonify, flash, session
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
-import urllib.request
-import os
+import time
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from requests.auth import AuthBase
+from urllib.request import urlopen
+from requests.auth import HTTPBasicAuth
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "dfdfdffdad"
@@ -230,9 +241,6 @@ def team():
     session['team'] = team
     return render_template("a.html",institution_info = institution_info,team = team)
 
-
-
-
 @app.route("/document",methods=['GET','POST'])
 def document():
     institution_info = session['institution_info']
@@ -373,6 +381,115 @@ def paper_search():
             flash(u"没有此老师信息")
             return render_template("index.html")
 
+
+@app.route("/paper_spider",methods=['GET','POST'])
+def paper_spider():
+    if request.method == 'POST':
+        school_name = request.form.get('schoolName')
+        teacher_name = request.form.get('teacherName')
+
+    author = []
+    source = []
+    volume = []
+    paper_name = []
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--headless")
+    browser = webdriver.Chrome(chrome_options=chrome_options)
+
+    browser.get("http://www.wanfangdata.com.cn/searchResult/getAdvancedSearch.do?searchType=all")
+    Select(browser.find_element_by_name('search_field')).select_by_value('作者')
+    browser.find_element_by_name('search_param').send_keys(teacher_name)
+    gg = browser.find_element_by_id('search_condition_input')
+    Select(gg.find_element_by_name('search_field')).select_by_value('作者单位')
+    gg.find_element_by_name('search_param').send_keys(school_name)
+    gg = browser.find_element_by_class_name('btn')
+    gg.click()
+    try:
+        wait = WebDriverWait(browser, 10)
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'author')))
+        soup = BeautifulSoup(browser.page_source, "html.parser")
+        paper_name = soup.select(".ResultCont")
+        author_temp = soup.select('.author')
+        source_temp = soup.select(".Source")
+        volume_temp = soup.select(".Volume")
+        for (p, i, j, k) in zip(paper_name, author_temp, source_temp, volume_temp):
+            paper_name.append(p.text)
+            author.append(i.text)
+            source.append(j.text)
+            volume.append(k.text)
+    except BaseException:
+        print('没有此老师论文信息')
+    while (1):
+        try:
+            next = browser.find_element_by_class_name('laypage_next')
+            next.click()
+            time.sleep(10)
+            wait = WebDriverWait(browser, 10)
+            wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'author')))
+            soup = BeautifulSoup(browser.page_source, "html.parser")
+            paper_name1 = soup.select(".ResultCont")
+            author_temp1 = soup.select('.author')
+            source_temp1 = soup.select(".Source")
+            volume_temp1 = soup.select(".Volume")
+            for (p, i, j, k) in zip(paper_name1, author_temp1, source_temp1, volume_temp1):
+                paper_name.append(p.text)
+                author.append(i.text)
+                source.append(j.text)
+                volume.append(k.text)
+        except BaseException:
+            break
+
+    move = dict.fromkeys((ord(c) for c in u"/\xa0/\n/\t"))
+    paper_name = paper_name[-len(author):]
+    for (p, i, j, k) in zip(paper_name, author, source, volume):
+        print(p[p.index("]") + 1:p.index("文摘阅读")], i.translate(move).strip(), j.translate(move).replace(" ", ""),
+              k.translate(move).replace(" ", "").replace("-", ""))
+    paper_info = []
+    for h in range(0,len(author)):
+        a = []
+        a.append(paper_name[h][paper_name[h].index("]") + 1:paper_name[h].index("文摘阅读")])
+        a.append(author[h])
+        a.append(source[h])
+        a.append(volume[h].replace(" ", "").replace("-", ""))
+        paper_info.append(a)
+
+    return  render_template("paper_spider.html",paper_info=paper_info)
+
+@app.route("/teacher_update")
+def teacher_update():
+    return render_template("teacher_update.html")
+
+@app.route("/teacher_update_info",methods=["GET","POST"])
+def teacher_update_info():
+    if request.method == 'POST':
+        school = request.form.get('school')
+        institution = request.form.get('institution')
+        name = request.form.get("name")
+        title = request.form.get("title")
+        sex = request.form.get("sex")
+        email = request.form.get("email")
+        tel = request.form.get("tel")
+        birthyear = request.form.get("birthyear")
+        fields = request.form.get("fields")
+        discipline = request.form.get("discipline")
+    info = {}
+    info['school'] = school
+    info['institution'] = institution
+    info['name'] = name
+    info['title'] = title
+    info['sex'] = sex
+    info['email'] = email
+    info['tel'] = tel
+    info['birthyear'] = birthyear
+    info['fields'] = fields
+    info['discipline'] = discipline
+    try:
+        with ClusterRpcProxy(CONFIG) as rpc:
+            rpc.teacher_update.insert_teacher_info(info)
+            flash(u"插入成功")
+    except:
+        flash(u"插入失败")
+    return render_template("teacher_update.html")
 
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True

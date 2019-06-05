@@ -40,17 +40,24 @@
         <div class="checkbox">
             <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='paper_search'"; value="教师论文查询" >
         </div>
+        <div class="checkbox">
+            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='paper_spider'"; value="教师万方论文爬取" >
+        </div>
     </form>
+
 </div>
 
+<button class="btn btn-info"><a style="text-decoration: none; color: white" href="{{ url_for('teacher_update') }}">教师信息载入</a></button>
+
 <div>
-        {% for message in get_flashed_messages() %}
-        <div class="alert alert-warning">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-            {{ message }}
-        </div>
-        {% endfor %}
+    {% for message in get_flashed_messages() %}
+    <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
     </div>
+    {% endfor %}
+</div>
+
 
 
 <script>
