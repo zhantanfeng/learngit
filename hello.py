@@ -198,7 +198,7 @@ class document(object):
     # 根据学校名获取带头人姓名，项目名，项目年份
     @rpc
     def get_project(self, org):
-        db = pymysql.connect(host='47.104.236.183', db='eds_spider', user='root', password='SLX..eds123', port=3306,
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
                              charset='utf8')
         cursor = db.cursor()
         sql = "SELECT PERSON,PROJECT_NAME,FUNDS,YEAR FROM eval_project where ORG = %s and FUNDS is not NULL"
@@ -273,10 +273,10 @@ class document(object):
     @rpc
     # 根据老师名获取老师专利
     def get_invention(self, teacherName):
-        db = pymysql.connect(host='47.104.236.183', db='lw_temp', user='root', password='SLX..eds123', port=3306,
+        db = pymysql.connect(host='47.104.236.183', db='zhuanli', user='root', password='111111', port=3306,
                              charset='utf8')
         cursor = db.cursor()
-        sql = "select title,date1 from cnki_zhuanli where author_list like '%%%s%%'" %(teacherName)
+        sql = "select title,date1 from zhuanli where author_list like '%%%s%%'" %(teacherName)
         cursor.execute(sql)
         invention = cursor.fetchall()
         return invention
@@ -813,9 +813,80 @@ class teacher_update(object):
         db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
                              charset='utf8')
         cursor = db.cursor()
-        sql = "insert into teacher_update_info(name,title,sex,school,institution,email,tel,birthyear,fields,discipline) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-        cursor.execute(sql, (teacher_info['name'],teacher_info['title'],teacher_info['sex'],teacher_info['school'],teacher_info['institution'],teacher_info['email'],teacher_info['tel'],teacher_info['birthyear'],teacher_info['fields'],teacher_info['discipline']))
+        sql = "insert into teacher_update_info(name,title,sex,school,institution,email,tel,birthyear,fields) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        cursor.execute(sql, (teacher_info['name'], teacher_info['title'], teacher_info['sex'], teacher_info['school'],
+                             teacher_info['institution'], teacher_info['email'], teacher_info['tel'],
+                             teacher_info['birthyear'], teacher_info['fields']))
         db.commit()
+
+
+    @rpc
+    #查看需要审核的老师更新数据
+    def get_info(self):
+        db = pymysql.connect(host='47.106.83.33',db='eds_base', user='root', password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select * from teacher_update_info"
+        cursor.execute(sql)
+        teacher_info = cursor.fetchall()
+        return teacher_info
+
+
+    # 根据学校名和学院名获取学校id和学院id
+    @rpc
+    def get_institutionId(self, schoolName, institutionName):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "select SCHOOL_ID,ID from es_institution where SCHOOL_NAME = %s and NAME = %s "
+        cursor.execute(sql, (schoolName, institutionName))
+        institution_id = cursor.fetchone()
+        return institution_id
+
+    #根据老师姓名，学校名和学院名获取老师ID
+    @rpc
+    def get_teacher_id(self, name, school_id, institution_id):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111', port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "SELECT ID FROM es_teacher where NAME = %s and SCHOOL_ID = %s and INSTITUTION_ID = %s"
+        cursor.execute(sql, (name, school_id,institution_id))
+        teacher_id = cursor.fetchone()
+        return teacher_id
+
+    #根据收集的信息更新老师的信息
+    @rpc
+    def update_teacher_info(self,title,sex,email,tel,birthyear,fields,teacher_id):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "update es_teacher set TITLE = %s, SEX = %s, EMAIL = %s, TEL = %s, BIRTHYEAR = %s, FIELDS = %s where ID = %s"
+        cursor.execute(sql,(title,sex,email,tel,birthyear,fields,teacher_id))
+        db.commit()
+
+    #将新增的老师信息添加进数据库
+    @rpc
+    def insert_teacher_newinfo(self,name,title,sex,school_id,institution_id,email,tel,birthyear,fields):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "insert into es_teacher(NAME,TITLE,SEX,SCHOOL_ID,INSTITUTION_ID,EMAIL,TEL,BIRTHYEAR,FIELDS) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        cursor.execute(sql,(name,title,sex,school_id,institution_id,email,tel,birthyear,fields))
+        db.commit()
+
+    #删除审核通过和不通过的老师新数据
+    @rpc
+    def delete_teacher_info(self,name,title,sex,school,institution,email,tel,birthyear,fields):
+        db = pymysql.connect(host='47.106.83.33', db='eds_base', user='root', password='111111',port=3306,
+                             charset='utf8')
+        cursor = db.cursor()
+        sql = "delete from teacher_update_info where name=%s and title=%s and sex=%s and school=%s and institution=%s and email=%s and tel=%s and birthyear=%s and fields=%s"
+        cursor.execute(sql,(name,title,sex,school,institution,email,tel,birthyear,fields))
+        db.commit()
+
+
+
+
 
 
 

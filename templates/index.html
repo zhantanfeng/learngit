@@ -14,15 +14,15 @@
 
     <form type="submit"  id="registerForm" method="post" autocomplete="off" onkeydown="if(event.keyCode==13) return false;">
         <div class="form-group">
-            <input type="text"  class="form-control" id="schoolName" name="schoolName" class="input-text" autocomplete="on" required="required" onkeyup="autoComplete.start(event)" placeholder="学校名">
+            <input type="text"  class="form-control" id="schoolName" name="schoolName" class="input-text" autocomplete="off" required="required" onkeyup="autoComplete.start(event)" placeholder="学校名">
         </div>
         <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
         <div class="form-group">
-            <input type="text" class="form-control" id="institutionName" name="institutionName" autocomplete="on" class="input-text" onkeyup="autoComplete1.start(event)"  placeholder="学院名">
+            <input type="text" class="form-control" id="institutionName" name="institutionName" autocomplete="off" class="input-text" onkeyup="autoComplete1.start(event)"  placeholder="学院名">
         </div>
         <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
         <div class="form-group">
-            <input type="text" class="form-control" id="teacherName" name="teacherName" class="input-text" autocomplete="on"  placeholder="老师名">
+            <input type="text" class="form-control" id="teacherName" name="teacherName" class="input-text" autocomplete="off"  placeholder="老师名">
         </div>
         <div class="auto_hidden" id="auto"><!--自动完成 DIV--></div>
         <div class="checkbox">
@@ -41,14 +41,14 @@
             <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='paper_search'"; value="教师论文查询" >
         </div>
         <div class="checkbox">
-            <input class="btn btn-primary btn-block btn btn-info"  type="submit" onclick="javascript:this.form.action='paper_spider'"; value="教师万方论文爬取" >
+            <input class="btn btn-primary btn-block btn btn-info"  type="submit"  value="教师万方论文爬取" >
         </div>
     </form>
 
 </div>
 
 <button class="btn btn-info"><a style="text-decoration: none; color: white" href="{{ url_for('teacher_update') }}">教师信息载入</a></button>
-
+<button class="btn btn-info"><a style="text-decoration: none; color: white" href="{{ url_for('get_check_info') }}">查看教师更新信息</a></button>
 <div>
     {% for message in get_flashed_messages() %}
     <div class="alert alert-warning">

@@ -471,7 +471,6 @@ def teacher_update_info():
         tel = request.form.get("tel")
         birthyear = request.form.get("birthyear")
         fields = request.form.get("fields")
-        discipline = request.form.get("discipline")
     info = {}
     info['school'] = school
     info['institution'] = institution
@@ -482,7 +481,7 @@ def teacher_update_info():
     info['tel'] = tel
     info['birthyear'] = birthyear
     info['fields'] = fields
-    info['discipline'] = discipline
+    print(info)
     try:
         with ClusterRpcProxy(CONFIG) as rpc:
             rpc.teacher_update.insert_teacher_info(info)
@@ -490,6 +489,55 @@ def teacher_update_info():
     except:
         flash(u"插入失败")
     return render_template("teacher_update.html")
+
+@app.route("/get_check_info")
+def get_check_info():
+    with ClusterRpcProxy(CONFIG) as rpc:
+        teacherinfo = rpc.teacher_update.get_info()
+    return render_template("check_info.html", teacherinfo = teacherinfo)
+
+@app.route("/checked",methods=['GET','POST'])
+def checked():
+    if request.method == 'POST':
+        school = request.form.get("school")
+        institution = request.form.get("institution")
+        name = request.form.get("name")
+        title = request.form.get("title")
+        sex = request.form.get("sex")
+        email = request.form.get("email")
+        tel = request.form.get("tel")
+        birthyear = request.form.get("birthyear")
+        fields = request.form.get("fields")
+    with ClusterRpcProxy(CONFIG) as rpc:
+        institution1 = rpc.teacher_update.get_institutionId(school,institution)
+        teacher_id = rpc.teacher_update.get_teacher_id(name,institution1[0],institution1[1])
+        if teacher_id:
+            rpc.teacher_update.update_teacher_info(title,sex,email,tel,birthyear,fields,teacher_id)
+        else:
+            rpc.teacher_update.insert_teacher_newinfo(name,title,sex,institution1[0],institution1[1],email,tel,birthyear,fields)
+    with ClusterRpcProxy(CONFIG) as rpc:
+        rpc.teacher_update.delete_teacher_info(name,title,sex,school,institution,email,tel,birthyear,fields)
+        teacherinfo = rpc.teacher_update.get_info()
+    return render_template("check_info.html", teacherinfo=teacherinfo)
+
+@app.route("/unchecked",methods=['GET','POST'])
+def unchecked():
+    if request.method == 'POST':
+        school = request.form.get("school")
+        institution = request.form.get("institution")
+        name = request.form.get("name")
+        title = request.form.get("title")
+        sex = request.form.get("sex")
+        email = request.form.get("email")
+        tel = request.form.get("tel")
+        birthyear = request.form.get("birthyear")
+        fields = request.form.get("fields")
+    print(school,institution,name,title,sex,email,tel,birthyear,fields)
+    with ClusterRpcProxy(CONFIG) as rpc:
+        rpc.teacher_update.delete_teacher_info(name,title,sex,school,institution,email,tel,birthyear,fields)
+    with ClusterRpcProxy(CONFIG) as rpc:
+        teacherinfo = rpc.teacher_update.get_info()
+    return render_template("check_info.html", teacherinfo = teacherinfo)
 
 if __name__ == '__main__':
     app.jinja_env.auto_reload = True
